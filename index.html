@@ -1,0 +1,414 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cuotas Fiestas Aguaviva de la Vega</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.23/jspdf.plugin.autotable.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap');
+        body { font-family: 'Inter', sans-serif; }
+        input::-webkit-outer-spin-button, input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+        
+        /* Ajuste para evitar desbordamiento en móviles */
+        .table-container {
+            -webkit-overflow-scrolling: touch;
+        }
+    </style>
+</head>
+<body class="bg-slate-50 min-h-screen">
+
+    <div class="max-w-5xl mx-auto px-4 py-6 md:py-10">
+        <!-- Encabezado Personalizado -->
+        <header class="text-center mb-6 md:mb-10">
+            <h1 class="text-3xl md:text-4xl font-extrabold text-slate-800 mb-2 px-2">🎉 Fiestas Aguaviva de la Vega</h1>
+            <p class="text-indigo-600 font-semibold uppercase tracking-widest text-xs md:sm">Control de Cuotas y Recaudación</p>
+        </header>
+
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 md:gap-8">
+            
+            <!-- Configuración y Formulario -->
+            <div class="lg:col-span-5 xl:col-span-4 space-y-6">
+                
+                <!-- Ajustes de Precio -->
+                <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200">
+                    <h2 class="text-xs font-bold text-slate-400 uppercase mb-4 flex items-center gap-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                        </svg>
+                        Precios de Cuota
+                    </h2>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-[10px] md:text-xs text-slate-500 mb-1">Adulto (€)</label>
+                            <input type="number" id="precioAdulto" value="20" oninput="calcularTotalForm()" class="w-full bg-slate-50 px-3 py-2 rounded-lg border border-slate-200 font-bold text-slate-700 outline-none focus:ring-2 focus:ring-indigo-500">
+                        </div>
+                        <div>
+                            <label class="block text-[10px] md:text-xs text-slate-500 mb-1">Niño (€)</label>
+                            <input type="number" id="precioNino" value="10" oninput="calcularTotalForm()" class="w-full bg-slate-50 px-3 py-2 rounded-lg border border-slate-200 font-bold text-slate-700 outline-none focus:ring-2 focus:ring-indigo-500">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Formulario de Entrada -->
+                <div class="bg-white p-5 md:p-6 rounded-2xl shadow-sm border border-slate-200">
+                    <h2 class="text-xl font-semibold mb-4 text-slate-700">Añadir Pago</h2>
+                    <form id="cuotaForm" class="space-y-5 md:space-y-6">
+                        <div>
+                            <label class="block text-sm font-medium text-slate-600 mb-1">Nombre del Pagador</label>
+                            <input type="text" id="nombre" required placeholder="Nombre completo"
+                                class="w-full px-4 py-3 rounded-lg border border-slate-300 focus:ring-2 focus:ring-indigo-500 outline-none text-base">
+                        </div>
+
+                        <!-- Selectores +/- Adaptados a móvil (botones más grandes) -->
+                        <div class="grid grid-cols-2 gap-4">
+                            <div class="space-y-2">
+                                <label class="block text-xs font-bold text-slate-500 uppercase text-center tracking-tight">Adultos</label>
+                                <div class="flex items-center justify-between bg-slate-100 rounded-xl p-1.5">
+                                    <button type="button" onclick="cambiarCantidad('adultos', -1)" class="w-12 h-12 flex items-center justify-center bg-white rounded-lg shadow-sm hover:bg-red-50 active:bg-red-100 text-red-600 font-bold text-xl transition-colors">-</button>
+                                    <span id="displayAdultos" class="font-bold text-xl text-slate-800">1</span>
+                                    <button type="button" onclick="cambiarCantidad('adultos', 1)" class="w-12 h-12 flex items-center justify-center bg-white rounded-lg shadow-sm hover:bg-green-50 active:bg-green-100 text-green-600 font-bold text-xl transition-colors">+</button>
+                                </div>
+                            </div>
+                            <div class="space-y-2">
+                                <label class="block text-xs font-bold text-slate-500 uppercase text-center tracking-tight">Niños</label>
+                                <div class="flex items-center justify-between bg-slate-100 rounded-xl p-1.5">
+                                    <button type="button" onclick="cambiarCantidad('ninos', -1)" class="w-12 h-12 flex items-center justify-center bg-white rounded-lg shadow-sm hover:bg-red-50 active:bg-red-100 text-red-600 font-bold text-xl transition-colors">-</button>
+                                    <span id="displayNinos" class="font-bold text-xl text-slate-800">0</span>
+                                    <button type="button" onclick="cambiarCantidad('ninos', 1)" class="w-12 h-12 flex items-center justify-center bg-white rounded-lg shadow-sm hover:bg-green-50 active:bg-green-100 text-green-600 font-bold text-xl transition-colors">+</button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Total Calculado -->
+                        <div class="bg-indigo-50 p-4 rounded-xl border border-indigo-100 flex flex-col items-center justify-center">
+                            <span class="text-indigo-900 font-medium text-sm mb-1 uppercase tracking-tighter">Total a pagar:</span>
+                            <span id="totalCalculado" class="text-3xl font-black text-indigo-700">20.00 €</span>
+                        </div>
+
+                        <div class="space-y-3">
+                            <button id="btnSubmitForm" type="submit" 
+                                class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-4 rounded-xl shadow-lg shadow-indigo-200 transition-all active:scale-95 text-lg">
+                                Confirmar Registro
+                            </button>
+                            <button id="btnCancelarEdicion" type="button"
+                                class="hidden w-full bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold py-3 rounded-xl transition-colors">
+                                Cancelar edición
+                            </button>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- Resumen Acumulado -->
+                <div class="bg-slate-800 text-white p-6 rounded-2xl shadow-xl">
+                    <h3 class="text-xs uppercase tracking-widest font-bold text-slate-400">Recaudación Total</h3>
+                    <p id="resumenDinero" class="text-3xl md:text-4xl font-black mt-1">0.00 €</p>
+                    <div class="mt-4 flex gap-4 text-xs font-medium text-slate-300">
+                        <span id="resumenAdultos" class="flex items-center gap-1">
+                            <span class="w-2 h-2 rounded-full bg-blue-400"></span> 0 Adultos
+                        </span>
+                        <span id="resumenNinos" class="flex items-center gap-1">
+                            <span class="w-2 h-2 rounded-full bg-orange-400"></span> 0 Niños
+                        </span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Lista de Registros -->
+            <div class="lg:col-span-7 xl:col-span-8">
+                <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden min-h-[400px] flex flex-col">
+                    <div class="p-5 md:p-6 border-b border-slate-100 flex flex-col sm:flex-row gap-4 sm:items-center justify-between bg-white">
+                        <div>
+                            <h2 class="text-xl font-bold text-slate-800">Lista de Pagos</h2>
+                            <p class="text-xs text-slate-400">Registro histórico de las fiestas</p>
+                        </div>
+                        <button id="btnPdf" class="flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white px-5 py-3 rounded-xl text-sm font-bold transition-all shadow-md shadow-emerald-100 w-full sm:w-auto">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                            </svg>
+                            Descargar PDF
+                        </button>
+                    </div>
+                    
+                    <div class="flex-grow overflow-x-auto table-container">
+                        <table class="w-full text-left border-collapse min-w-[500px]">
+                            <thead>
+                                <tr class="bg-slate-50 text-slate-400 text-[10px] uppercase tracking-[0.2em]">
+                                    <th class="px-6 py-4 font-bold">Pagador</th>
+                                    <th class="px-6 py-4 font-bold text-center">Detalle (A/N)</th>
+                                    <th class="px-6 py-4 font-bold text-right">Importe</th>
+                                    <th class="px-6 py-4 font-bold text-center">Gestión</th>
+                                </tr>
+                            </thead>
+                            <tbody id="listaCuerpo" class="divide-y divide-slate-100 text-slate-700">
+                                <!-- Filas dinámicas aquí -->
+                            </tbody>
+                        </table>
+                        
+                        <div id="emptyState" class="flex flex-col items-center justify-center p-12 md:p-20 text-slate-300">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-16 w-16 mb-4 opacity-20" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                            </svg>
+                            <p class="font-medium text-lg">No hay registros aún</p>
+                            <p class="text-sm">Añade el primer pago desde el panel lateral</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Adaptado -->
+    <div id="toast" class="fixed bottom-6 md:bottom-8 left-4 right-4 md:left-1/2 md:-translate-x-1/2 md:max-w-xs bg-slate-900 text-white px-6 py-4 rounded-2xl shadow-2xl transform translate-y-48 transition-transform duration-500 font-bold z-50 text-center text-sm">
+        Mensaje
+    </div>
+
+    <script>
+        const { jsPDF } = window.jspdf;
+        
+        // Estado inicial
+        let registros = [];
+        let formAdultos = 1;
+        let formNinos = 0;
+        let editandoIndex = null;
+
+        // Referencias DOM
+        const form = document.getElementById('cuotaForm');
+        const listaCuerpo = document.getElementById('listaCuerpo');
+        const emptyState = document.getElementById('emptyState');
+        const resumenDinero = document.getElementById('resumenDinero');
+        const resumenAdultos = document.getElementById('resumenAdultos');
+        const resumenNinos = document.getElementById('resumenNinos');
+        const totalCalculadoDisplay = document.getElementById('totalCalculado');
+        const btnPdf = document.getElementById('btnPdf');
+        const btnSubmitForm = document.getElementById('btnSubmitForm');
+        const btnCancelarEdicion = document.getElementById('btnCancelarEdicion');
+
+        function resetFormulario() {
+            form.reset();
+            formAdultos = 1;
+            formNinos = 0;
+            editandoIndex = null;
+            document.getElementById('displayAdultos').textContent = '1';
+            document.getElementById('displayNinos').textContent = '0';
+            btnSubmitForm.textContent = 'Confirmar Registro';
+            btnCancelarEdicion.classList.add('hidden');
+            calcularTotalForm();
+        }
+
+        // Función para cambiar cantidades +/-
+        window.cambiarCantidad = (tipo, valor) => {
+            if (tipo === 'adultos') {
+                formAdultos = Math.max(0, formAdultos + valor);
+                document.getElementById('displayAdultos').textContent = formAdultos;
+            } else {
+                formNinos = Math.max(0, formNinos + valor);
+                document.getElementById('displayNinos').textContent = formNinos;
+            }
+            calcularTotalForm();
+        }
+
+        // Calcular total sugerido en el formulario
+        function calcularTotalForm() {
+            const pAdulto = parseFloat(document.getElementById('precioAdulto').value) || 0;
+            const pNino = parseFloat(document.getElementById('precioNino').value) || 0;
+            const total = (formAdultos * pAdulto) + (formNinos * pNino);
+            totalCalculadoDisplay.textContent = `${total.toFixed(2)} €`;
+            return total;
+        }
+
+        function showToast(msg) {
+            const t = document.getElementById('toast');
+            t.textContent = msg;
+            t.classList.remove('translate-y-48');
+            setTimeout(() => t.classList.add('translate-y-48'), 2500);
+        }
+
+        function actualizarInterfaz() {
+            listaCuerpo.innerHTML = '';
+            if (registros.length === 0) {
+                emptyState.classList.remove('hidden');
+            } else {
+                emptyState.classList.add('hidden');
+            }
+
+            let acumEuros = 0;
+            let acumAdultos = 0;
+            let acumNinos = 0;
+
+            registros.forEach((reg, index) => {
+                acumEuros += reg.importe;
+                acumAdultos += reg.numAdultos;
+                acumNinos += reg.numNinos;
+
+                const tr = document.createElement('tr');
+                tr.className = 'hover:bg-slate-50 transition-colors animate-in fade-in slide-in-from-left-4 duration-300';
+                tr.innerHTML = `
+                    <td class="px-4 md:px-6 py-4">
+                        <div class="font-bold text-slate-800 text-sm md:text-base">${reg.nombre}</div>
+                        <div class="text-[10px] text-slate-400 uppercase tracking-tight">${reg.fecha}</div>
+                    </td>
+                    <td class="px-4 md:px-6 py-4 text-center">
+                        <span class="inline-flex gap-1 md:gap-2">
+                            <span class="bg-blue-50 text-blue-700 px-2 py-1 rounded text-[10px] md:text-xs font-bold">${reg.numAdultos}A</span>
+                            <span class="bg-orange-50 text-orange-700 px-2 py-1 rounded text-[10px] md:text-xs font-bold">${reg.numNinos}N</span>
+                        </span>
+                    </td>
+                    <td class="px-4 md:px-6 py-4 text-right font-black text-slate-800 text-sm md:text-base">${reg.importe.toFixed(2)} €</td>
+                    <td class="px-4 md:px-6 py-4 text-center">
+                        <div class="flex items-center justify-center gap-1 md:gap-2">
+                            <button onclick="editarRegistro(${index})" class="text-slate-300 hover:text-indigo-600 p-2 transition-colors" title="Editar">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mx-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L12 15l-4 1 1-4 8.586-8.586z" />
+                                </svg>
+                            </button>
+                            <button onclick="eliminarRegistro(${index})" class="text-slate-300 hover:text-red-500 p-2 transition-colors" title="Eliminar">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mx-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                </svg>
+                            </button>
+                        </div>
+                    </td>
+                `;
+                listaCuerpo.appendChild(tr);
+            });
+
+            resumenDinero.textContent = `${acumEuros.toFixed(2)} €`;
+            resumenAdultos.innerHTML = `<span class="w-2 h-2 rounded-full bg-blue-400"></span> ${acumAdultos} Adultos`;
+            resumenNinos.innerHTML = `<span class="w-2 h-2 rounded-full bg-orange-400"></span> ${acumNinos} Niños`;
+        }
+
+        form.addEventListener('submit', (e) => {
+            e.preventDefault();
+            
+            if (formAdultos === 0 && formNinos === 0) {
+                showToast('¡Selecciona al menos una persona!');
+                return;
+            }
+
+            const nombre = document.getElementById('nombre').value;
+            const total = calcularTotalForm();
+            const fechaActual = new Date().toLocaleString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+
+            if (editandoIndex !== null) {
+                registros[editandoIndex] = {
+                    ...registros[editandoIndex],
+                    nombre,
+                    numAdultos: formAdultos,
+                    numNinos: formNinos,
+                    importe: total,
+                    fecha: fechaActual
+                };
+                showToast('Aportación actualizada');
+            } else {
+                const registro = {
+                    nombre,
+                    numAdultos: formAdultos,
+                    numNinos: formNinos,
+                    importe: total,
+                    fecha: fechaActual
+                };
+                registros.unshift(registro);
+                showToast('¡Pago registrado con éxito!');
+            }
+
+            resetFormulario();
+            document.getElementById('nombre').focus();
+            actualizarInterfaz();
+        });
+
+        window.editarRegistro = (index) => {
+            const reg = registros[index];
+            if (!reg) {
+                return;
+            }
+
+            editandoIndex = index;
+            document.getElementById('nombre').value = reg.nombre;
+            formAdultos = reg.numAdultos;
+            formNinos = reg.numNinos;
+            document.getElementById('displayAdultos').textContent = formAdultos;
+            document.getElementById('displayNinos').textContent = formNinos;
+            btnSubmitForm.textContent = 'Guardar Cambios';
+            btnCancelarEdicion.classList.remove('hidden');
+            calcularTotalForm();
+            document.getElementById('nombre').focus();
+            showToast('Editando aportación');
+        };
+
+        window.eliminarRegistro = (index) => {
+            if (!confirm('¿Seguro que quieres eliminar esta aportación?')) {
+                return;
+            }
+
+            registros.splice(index, 1);
+
+            if (editandoIndex === index) {
+                resetFormulario();
+            } else if (editandoIndex !== null && index < editandoIndex) {
+                editandoIndex -= 1;
+            }
+
+            actualizarInterfaz();
+            showToast('Aportación eliminada');
+        };
+
+        btnCancelarEdicion.addEventListener('click', () => {
+            resetFormulario();
+            document.getElementById('nombre').focus();
+            showToast('Edición cancelada');
+        });
+
+        btnPdf.addEventListener('click', () => {
+            if (registros.length === 0) {
+                showToast('No hay datos para exportar');
+                return;
+            }
+
+            const doc = new jsPDF();
+            const fechaPdf = new Date().toLocaleDateString();
+
+            doc.setFillColor(79, 70, 229);
+            doc.rect(0, 0, 210, 40, 'F');
+            doc.setTextColor(255, 255, 255);
+            doc.setFontSize(22);
+            doc.text("Fiestas Aguaviva de la Vega", 14, 20);
+            doc.setFontSize(12);
+            doc.text("Listado de Recaudación y Cuotas", 14, 30);
+            
+            doc.setTextColor(255, 255, 255);
+            doc.text(fechaPdf, 180, 25);
+
+            const body = registros.map(r => [
+                r.nombre,
+                r.numAdultos,
+                r.numNinos,
+                `${r.importe.toFixed(2)} €`,
+                r.fecha
+            ]);
+
+            doc.autoTable({
+                startY: 50,
+                head: [['Nombre Pagador', 'Adultos', 'Niños', 'Total', 'Fecha']],
+                body: body,
+                theme: 'striped',
+                headStyles: { fillColor: [51, 65, 85] },
+                foot: [['TOTALES', 
+                        registros.reduce((acc, r) => acc + r.numAdultos, 0), 
+                        registros.reduce((acc, r) => acc + r.numNinos, 0),
+                        `${registros.reduce((acc, r) => acc + r.importe, 0).toFixed(2)} €`, 
+                        '']],
+                footStyles: { fillColor: [241, 245, 249], textColor: [0, 0, 0], fontStyle: 'bold' }
+            });
+
+            doc.save(`cuotas_aguaviva_${Date.now()}.pdf`);
+            showToast('PDF descargado correctamente');
+        });
+
+        resetFormulario();
+    </script>
+</body>
+</html>
