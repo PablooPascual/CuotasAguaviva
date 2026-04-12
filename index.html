@@ -31,31 +31,11 @@
             
             <!-- Configuración y Formulario -->
             <div class="lg:col-span-5 xl:col-span-4 space-y-6">
-                
-                <!-- Ajustes de Precio -->
-                <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200">
-                    <h2 class="text-xs font-bold text-slate-400 uppercase mb-4 flex items-center gap-2">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                        </svg>
-                        Precios de Cuota
-                    </h2>
-                    <div class="grid grid-cols-2 gap-4">
-                        <div>
-                            <label class="block text-[10px] md:text-xs text-slate-500 mb-1">Adulto (€)</label>
-                            <input type="number" id="precioAdulto" value="20" oninput="calcularTotalForm()" class="w-full bg-slate-50 px-3 py-2 rounded-lg border border-slate-200 font-bold text-slate-700 outline-none focus:ring-2 focus:ring-indigo-500">
-                        </div>
-                        <div>
-                            <label class="block text-[10px] md:text-xs text-slate-500 mb-1">Niño (€)</label>
-                            <input type="number" id="precioNino" value="10" oninput="calcularTotalForm()" class="w-full bg-slate-50 px-3 py-2 rounded-lg border border-slate-200 font-bold text-slate-700 outline-none focus:ring-2 focus:ring-indigo-500">
-                        </div>
-                    </div>
-                </div>
 
                 <!-- Formulario de Entrada -->
                 <div class="bg-white p-5 md:p-6 rounded-2xl shadow-sm border border-slate-200">
                     <h2 class="text-xl font-semibold mb-4 text-slate-700">Añadir Pago</h2>
+                    <p class="text-xs md:text-sm text-slate-500 mb-4">Tarifa fija: Adulto 30 € · Niño 20 €</p>
                     <form id="cuotaForm" class="space-y-5 md:space-y-6">
                         <div>
                             <label class="block text-sm font-medium text-slate-600 mb-1">Nombre del Pagador</label>
@@ -125,7 +105,7 @@
                             <h2 class="text-xl font-bold text-slate-800">Lista de Pagos</h2>
                             <p class="text-xs text-slate-400">Registro histórico de las fiestas</p>
                         </div>
-                        <button id="btnPdf" class="flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white px-5 py-3 rounded-xl text-sm font-bold transition-all shadow-md shadow-emerald-100 w-full sm:w-auto">
+                        <button id="btnPdf" type="button" class="flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white px-5 py-3 rounded-xl text-sm font-bold transition-all shadow-md shadow-emerald-100 w-full sm:w-auto">
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                             </svg>
@@ -168,6 +148,9 @@
 
     <script>
         const { jsPDF } = window.jspdf;
+        const PRECIO_ADULTO = 30;
+        const PRECIO_NINO = 20;
+        const STORAGE_KEY = 'aguaviva_registros';
         
         // Estado inicial
         let registros = [];
@@ -186,6 +169,20 @@
         const btnPdf = document.getElementById('btnPdf');
         const btnSubmitForm = document.getElementById('btnSubmitForm');
         const btnCancelarEdicion = document.getElementById('btnCancelarEdicion');
+
+        function guardarRegistros() {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(registros));
+        }
+
+        function cargarRegistros() {
+            try {
+                const guardados = localStorage.getItem(STORAGE_KEY);
+                const parsed = guardados ? JSON.parse(guardados) : [];
+                registros = Array.isArray(parsed) ? parsed : [];
+            } catch {
+                registros = [];
+            }
+        }
 
         function resetFormulario() {
             form.reset();
@@ -213,9 +210,7 @@
 
         // Calcular total sugerido en el formulario
         function calcularTotalForm() {
-            const pAdulto = parseFloat(document.getElementById('precioAdulto').value) || 0;
-            const pNino = parseFloat(document.getElementById('precioNino').value) || 0;
-            const total = (formAdultos * pAdulto) + (formNinos * pNino);
+            const total = (formAdultos * PRECIO_ADULTO) + (formNinos * PRECIO_NINO);
             totalCalculadoDisplay.textContent = `${total.toFixed(2)} €`;
             return total;
         }
@@ -315,6 +310,7 @@
                 showToast('¡Pago registrado con éxito!');
             }
 
+            guardarRegistros();
             resetFormulario();
             document.getElementById('nombre').focus();
             actualizarInterfaz();
@@ -352,6 +348,7 @@
                 editandoIndex -= 1;
             }
 
+            guardarRegistros();
             actualizarInterfaz();
             showToast('Aportación eliminada');
         };
@@ -362,7 +359,9 @@
             showToast('Edición cancelada');
         });
 
-        btnPdf.addEventListener('click', () => {
+        btnPdf.addEventListener('click', (e) => {
+            e.preventDefault();
+
             if (registros.length === 0) {
                 showToast('No hay datos para exportar');
                 return;
@@ -408,7 +407,9 @@
             showToast('PDF descargado correctamente');
         });
 
+        cargarRegistros();
         resetFormulario();
+        actualizarInterfaz();
     </script>
 </body>
 </html>
